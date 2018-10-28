@@ -11,6 +11,38 @@ interface IParseMiddleObject {
 }
 
 /**
+ * 直接替换的字符
+ */
+const special: { [k: string]: string } = {
+    '\b': '\\b',
+    '\t': '\\t',
+    '\n': '\\n',
+    '\f': '\\f',
+    '\r': '\\r',
+    '"': '\\"',
+    '\\': '\\\\'
+};
+
+/**
+ * 将特殊字符替换为转义之后的字符串
+ * @param chr 待替换的字符
+ */
+const _escape: (chr: string) => string = (chr) => {
+    return special[chr]
+        || '\\u' + ('0000' + chr.charCodeAt(0).toString(16)).slice(-4);
+};
+
+/**
+ * 转义字符串
+ * @param str 待转义的字符串 
+ */
+const escape: (str: string) => string = (obj) => {
+    return '"' + obj.replace(/[\x00-\x1f\\"]/g, _escape) + '"';
+};
+
+
+
+/**
  * 将 json 转成字符串的函数  
  * 中间格式如下  
  * [  
@@ -51,7 +83,7 @@ const json2string: (list: IParseMiddleObject[], confIndent: string, indent?: str
                             nl.push({ isNeedParse: false, content: pre + v });
                             break;
                         case 'string':
-                            nl.push({ isNeedParse: false, content: pre + '"' + v.replace(/"/g , '\\"') + '"' });
+                            nl.push({ isNeedParse: false, content: pre + escape(v) });
                             break;
                         case 'object':
                             isFinished = false;

@@ -2,25 +2,24 @@
       "name" : "head-comma-json"
     , "displayName" : "head comma json"
     , "description" : "句首逗号的 json 格式化工具"
-    , "version" : "0.0.1"
+    , "version" : "0.0.2"
     , "publisher" : "cgua"
-    , "private" : true
-    , "icon": "logo.png"
-    , "homepage": "https://github.com/cgua/head-comma-json"
-    , "repository": {
-        "type": "git"
-        , "url": "https://github.com/cgua/head-comma-json"
+    , "icon" : "logo.png"
+    , "homepage" : "https://github.com/cgua/head-comma-json"
+    , "repository" : {
+          "type" : "git"
+        , "url" : "https://github.com/cgua/head-comma-json"
     }
     , "engines" : {
           "vscode" : "^1.28.0"
     }
     , "categories" : [
-        "Other",
-          "Formatters"
+          "Other"
+        , "Formatters"
     ]
     , "activationEvents" : [
           "onLanguage:json"
-        ,  "onLanguage:jsonc"
+        , "onLanguage:jsonc"
         , "onCommand:extension.headCommaJson"
     ]
     , "main" : "./out/extension"
