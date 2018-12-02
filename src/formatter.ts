@@ -1,4 +1,5 @@
 import { TextDocument, FormattingOptions, Range, TextEdit, window, workspace, TextEditorEdit, Position } from "vscode";
+import { jsonc } from 'jsonc';
 
 /**
  * 格式化中间项目
@@ -40,8 +41,6 @@ const escape: (str: string) => string = (obj) => {
     return '"' + obj.replace(/[\x00-\x1f\\"]/g, _escape) + '"';
 };
 
-
-
 /**
  * 将 json 转成字符串的函数  
  * 中间格式如下  
@@ -69,7 +68,15 @@ const json2string: (list: IParseMiddleObject[], confIndent: string, indent?: str
             else {
                 const trg = o.content;
                 let j = 0;
-                for (let k in trg) {
+                const keys: string[] = [];
+                for (const k in trg) {
+                    keys.push(k);
+                }
+                if (getIsSort()) {
+                    keys.sort();
+                }
+
+                for (let k of keys) {
                     const v = (<any>trg)[k];
                     const idot = j === 0 ? indent + '  ' : indent + ', ';
                     //　如果是数组则不输出键名
@@ -105,11 +112,10 @@ const json2string: (list: IParseMiddleObject[], confIndent: string, indent?: str
             }
         }
         if (isFinished) {
-            let str = '{\n';
+            let str = '';
             for (let i of nl) {
                 str += i.content + '\n';
             }
-            str += '}';
             return str;
         }
         else {
@@ -125,7 +131,8 @@ const string2json: (str: string) => undefined | JSON = (str: string) => {
     let json: JSON | undefined;
 
     try {
-        json = JSON.parse(str);
+        // json = JSON.parse(str);
+        json = jsonc.parse(str);
     }
     catch (e) {
         window.showInformationMessage('无法解析当前文件.');
@@ -135,19 +142,41 @@ const string2json: (str: string) => undefined | JSON = (str: string) => {
     return json;
 };
 
+const getIsSort: () => boolean = () => {
+    const conf = workspace.getConfiguration('HeadCommaJson');
+    const sortConf = (conf.has('sort') ? conf.get('sort') : true)!;
+    return sortConf === true;
+}
+
+const getSpace: (n: number) => string = (n) => {
+    let str = '';
+    for (let i = 0; i < n; i++) {
+        str += ' ';
+    }
+    return str;
+}
+
 /**
  * 从设置中获取缩进
  */
-const getIndent: () => string = () => {
+const getIndentConfig: () => number = () => {
     const conf = workspace.getConfiguration('HeadCommaJson');
     const indentConf = (conf.has('indent') ? conf.get('indent') : 4)!;
     let indentCount = parseInt(indentConf.toString());
-    indentCount = isNaN(indentCount) ? 4 : indentCount < 0 ? 4 : indentCount;
-    let indent = '';
-    for (let i = 0; i < indentCount; i++) {
-        indent += ' ';
+    return isNaN(indentCount) ? 4 : indentCount < 0 ? 4 : indentCount;
+};
+
+const getStringIndent: (str: string) => number = (str) => {
+    let i = 0;
+    for (const c of str) {
+        if (c === ' ') {
+            i++;
+        }
+        else {
+            break;
+        }
     }
-    return indent;
+    return Math.floor(i / getIndentConfig());
 };
 
 /**
@@ -156,7 +185,7 @@ const getIndent: () => string = () => {
  * @param range    选区 
  * @param options  格式化选项 , 目前并没什么用
  */
-const formatter: (document: TextDocument, range: Range, options: FormattingOptions) => TextEdit[]
+const formatter: (document: TextDocument, range: Range, options: FormattingOptions) => TextEdit[] | undefined
     = (document, range, options) => {
         const list: TextEdit[] = [];
 
@@ -173,9 +202,9 @@ const formatter: (document: TextDocument, range: Range, options: FormattingOptio
         const json = string2json(document.getText(range));
 
         if (json === undefined) {
-            return list;
+            return undefined;
         }
-        const newText = json2string([{ isNeedParse: true, content: json }], getIndent());
+        const newText = '{\n' + json2string([{ isNeedParse: true, content: json }], getSpace(getIndentConfig())) + '\n}\n';
         list.push(new TextEdit(range, newText));
         return list;
     };
@@ -186,25 +215,48 @@ const formatter: (document: TextDocument, range: Range, options: FormattingOptio
  */
 // todo args
 const cmdFormatter: (...args: any[]) => void = (...args) => {
-    const editor = window.activeTextEditor;
+    console.log(args);
+    const editor = window.activeTextEditor!;
     if (editor === undefined) {
         window.showInformationMessage('请先激活需要格式化的文件.');
         return;
     }
+    const selection = editor.selection;
     const doc = editor.document;
-    if (doc === undefined) {
-        window.showInformationMessage('请先激活需要格式化的文件.');
-        return;
+    const indent = getIndentConfig();
+
+    let stext = '';
+    let start: Position;
+    let end: Position;
+    let isFullDoc = true;
+    let strIndent = 0;
+
+    if (selection.isEmpty) {
+        stext = editor.document.getText();
+        start = new Position(0, 0);
+        end = new Position(doc.lineCount - 1, doc.lineAt(doc.lineCount - 1).text.length);
     }
-    const json = string2json(doc.getText());
-    const str = json2string([{ isNeedParse: true, content: json }], getIndent());
-    if (str === undefined) {
+    else {
+        isFullDoc = false;
+        start = selection.start;
+        end = selection.end;
+        stext = doc.getText(new Range(start, end));
+        strIndent = getStringIndent(stext);
+        stext = stext.replace(/(^[\s|,]+)|([\s|,]+$)/g, '');
+        stext = `{${stext}}`;
+    }
+
+    const json = string2json(stext);
+    if (undefined === json) {
         window.showInformationMessage('格式化失败.');
         return;
     }
+    let str = json2string([{ isNeedParse: true, content: json }], getSpace(indent), getSpace(strIndent));
+    if (isFullDoc) {
+        str = '{\n' + str + '\n}\n';
+    }
+
     editor.edit(function (builder: TextEditorEdit) {
-        let start = new Position(0, 0);
-        let end = new Position(doc.lineCount - 1, doc.lineAt(doc.lineCount - 1).text.length);
         builder.delete(new Range(start, end));
         builder.insert(start, str!);
     });

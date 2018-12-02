@@ -1,64 +1,72 @@
 {
-      "name" : "head-comma-json"
-    , "displayName" : "head comma json"
-    , "description" : "句首逗号的 json 格式化工具"
-    , "version" : "0.0.2"
-    , "publisher" : "cgua"
-    , "icon" : "logo.png"
-    , "homepage" : "https://github.com/cgua/head-comma-json"
-    , "repository" : {
-          "type" : "git"
-        , "url" : "https://github.com/cgua/head-comma-json"
-    }
-    , "engines" : {
-          "vscode" : "^1.28.0"
-    }
-    , "categories" : [
-          "Other"
-        , "Formatters"
-    ]
-    , "activationEvents" : [
-          "onLanguage:json"
-        , "onLanguage:jsonc"
-        , "onCommand:extension.headCommaJson"
-    ]
-    , "main" : "./out/extension"
-    , "contributes" : {
-          "commands" : [
-              {
-                  "command" : "extension.headCommaJson"
-                , "title" : "headCommaJson"
+    "name": "head-comma-json",
+    "displayName": "head comma json",
+    "description": "句首逗号的 json 格式化工具",
+    "version": "0.0.3",
+    "publisher": "cgua",
+    "icon": "logo.png",
+    "homepage": "https://github.com/cgua/head-comma-json",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/cgua/head-comma-json"
+    },
+    "engines": {
+        "vscode": "^1.28.0"
+    },
+    "categories": [
+        "Other",
+        "Formatters"
+    ],
+    "activationEvents": [
+        "onLanguage:json",
+        "onLanguage:jsonc",
+        "onCommand:extension.headCommaJson"
+    ],
+    "main": "./out/extension",
+    "contributes": {
+        "commands": [
+            {
+                "command": "extension.headCommaJson",
+                "title": "headCommaJson"
             }
-        ]
-        , "configuration" : {
-              "title" : "HeadComma"
-            , "type" : "object"
-            , "properties" : {
-                  "HeadCommaJson.indent" : {
-                      "type" : "integer"
-                    , "default" : 4
-                    , "description" : "缩进的数量"
-                }
-                , "HeadCommaJson.registerAsFormatter" : {
-                      "type" : "boolean"
-                    , "default" : false
-                    , "description" : "是否将本插件注册为 json 语言的格式化工具. 由于暂不支持 jsonc ,所以建议关闭它只使用命令行。并使用默认格式化工具。"
+        ],
+        "configuration": {
+            "title": "HeadComma",
+            "type": "object",
+            "properties": {
+                "HeadCommaJson.indent": {
+                    "type": "integer",
+                    "default": 4,
+                    "description": "缩进的数量"
+                },
+                "HeadCommaJson.registerAsFormatter": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "是否将本插件注册为 json 语言的格式化工具. 由于暂不支持 jsonc ,所以建议关闭它只使用命令行。并使用默认格式化工具。"
+                },
+                "HeadCommaJson.sort": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "是否对 Json 进行排序"
                 }
             }
         }
-    }
-    , "scripts" : {
-          "vscode:prepublish" : "npm run compile"
-        , "compile" : "tsc -p ./"
-        , "watch" : "tsc -watch -p ./"
-        , "postinstall" : "node ./node_modules/vscode/bin/install"
-    }
-    , "devDependencies" : {
-          "@types/mocha" : "^2.2.42"
-        , "@types/node" : "^8.10.25"
-        , "tslint" : "^5.8.0"
-        , "typescript" : "^2.6.1"
-        , "vsce" : "^1.52.0"
-        , "vscode" : "^1.1.21"
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "postinstall": "node ./node_modules/vscode/bin/install"
+    },
+    "devDependencies": {
+        "@types/mocha": "^2.2.42",
+        "@types/node": "^8.10.25",
+        "tslint": "^5.8.0",
+        "typescript": "^2.6.1",
+        "vsce": "^1.52.0",
+        "vscode": "^1.1.21"
+    },
+    "dependencies": {
+        "jsonc": "^1.1.0"
     }
 }

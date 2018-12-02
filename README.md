@@ -4,19 +4,6 @@
 
 ## Features
 
-- 由于只是简单的调用　JSON.parse 函数进行格式化，所以无法处理 jsonc 文件，　未来可能会添加对 jsonc 文件的支持。
-
-
-## Requirements
-
 ## Known Issues
 
-
-## Release Notes
-
-### 0.0.1
-
-测试运行可以 > <  
-
-
-**Enjoy!**
+1. jsonc 注释会丢失
