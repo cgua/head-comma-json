@@ -1,0 +1,39 @@
+{
+    "description": "句首逗号的 json 格式化工具"
+    , "displayName": "head comma json"
+    , "homepage": "https://github.com/cgua/head-comma-json"
+    , "icon": "logo.png"
+    , "main": "./out/extension"
+    , "name": "head-comma-json"
+    , "publisher": "cgua"
+    , "version": "0.1.0"
+    , "activationEvents": ["onLanguage:json", "onLanguage:jsonc", "onCommand:extension.headCommaJson"]
+    , "categories": ["Other", "Formatters"]
+    , "contributes": {
+        "commands":       [
+            { "command": "extension.headCommaJson" , "title": "headCommaJson"}
+        ]
+        , "configuration":{
+            "title":       "HeadComma"
+            , "type":      "object"
+            , "properties":{
+                "HeadCommaJson.align": { "default": 6 , "description": "当键名长度差距在多少以内进行对齐" , "type": "integer"}
+                , "HeadCommaJson.indent": { "default": 4 , "description": "缩进的数量" , "type": "integer"}
+                , "HeadCommaJson.registerAsFormatter": { "default": false , "description": "是否将本插件注册为 json 语言的格式化工具. 由于暂不支持 jsonc ,所以建议关闭它只使用命令行。并使用默认格式化工具。" , "type": "boolean"}
+                , "HeadCommaJson.sort": { "default": true , "description": "是否对 Json 进行排序" , "type": "boolean"}
+            }
+        }
+    }
+    , "dependencies": { "jsonc": "^2.0.0"}
+    , "devDependencies": { "@types/mocha": "^5.2.7" , "@types/node": "^12.12.6" , "nyc": "^14.1.1" , "tslint": "^5.20.1" , "vsce": "^1.69.0" , "vscode": "^1.1.36"}
+    , "engines": { "vscode": "^1.28.0"}
+    , "repository": { "type": "git" , "url": "https://github.com/cgua/head-comma-json"}
+    , "scripts": {
+        "compile": "tsc -p ./"
+        , "package": "npx vsce package"
+        , "postinstall": "node ./node_modules/vscode/bin/install"
+        , "publicsh": "npx vsce publish"
+        , "vscode:prepublish": "npm run compile"
+        , "watch": "tsc -watch -p ./"
+    }
+}
