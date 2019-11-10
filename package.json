@@ -17,6 +17,11 @@
         ],
         "configuration": {
             "properties": {
+                "HeadCommaJson.tailComma": {
+                    "default": true,
+                    "description": "是否将逗号放在句尾",
+                    "type": "boolean"
+                },
                 "HeadCommaJson.align": {
                     "default": 6,
                     "description": "当键名长度差距在多少以内进行对齐",
@@ -40,7 +45,7 @@
                 "HeadCommaJson.maxLineLen": {
                     "default": 80,
                     "description": "合并之后单行的最大长度，中文的话可能会超长",
-                    "type": "interger"
+                    "type": "integer"
                 }
             },
             "title": "HeadComma",

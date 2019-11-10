@@ -5,6 +5,7 @@ const INDENT = "indent";
 const SORT = "sort";
 const ALIGN = "align";
 const LINE = "maxLineLen";
+const TAIL = "tailComma";
 
 class Config {
     /** 是否需要排队 */
@@ -17,6 +18,8 @@ class Config {
     public align = 6;
     /** 最大单行长度 */
     public lineLen = 80;
+    /** 是否将逗号放在句尾 */
+    public tailComma = true;
 
     public update(): void {
         const conf = workspace.getConfiguration('HeadCommaJson');
@@ -25,6 +28,15 @@ class Config {
         this.indentCount = this.getUInt(conf, INDENT, this.indentCount);
         this.indent = getSpace(this.indentCount);
         this.lineLen = this.getUInt(conf, LINE, this.lineLen);
+        this.tailComma = this.getBool(conf, TAIL, this.tailComma);
+    }
+
+    private getBool(conf: WorkspaceConfiguration, name: string, def: boolean): boolean {
+        if (conf.has(name)) {
+            return conf.get(name) === true;
+        }
+        window.showInformationMessage("config not found:" + name);
+        return def;
     }
 
     private updateSort(conf: WorkspaceConfiguration): void {
@@ -44,7 +56,7 @@ class Config {
             }
             return vl;
         }
-        window.showInformationMessage("indent config not found");
+        window.showInformationMessage("config not found:" + name);
         return defaultValue;
     }
 
