@@ -25,9 +25,10 @@ export class JsonValue {
         }
         switch (typeof obj) {
             case "object": return ["object", obj];
-            case "number":
+            case "bigint":
             case "boolean":
-            case "bigint": return ["simple", obj.toString()];
+            case "number":
+                return ["simple", obj.toString()];
             case "string": return ["simple", simpleEscape(obj)];
             default: throw new Error(`unknown type:${typeof obj}`);
         }
@@ -49,15 +50,15 @@ export class JsonValue {
     }
 
     private objectFields(): [string[], boolean] {
-        let max = 0;
-        let min = Number.MAX_SAFE_INTEGER;
+        let maxKeyLen = 0;
+        let minKeyLen = Number.MAX_SAFE_INTEGER;
         let oneLine = true;
         let keys = [] as string[];
         const head = this.head + this.indent;
         const jsonValueMap: { [k: string]: JsonValue } = {};
         for (let k in this.value) {
-            max = Math.max(k.length, max);
-            min = Math.min(k.length, min)
+            maxKeyLen = Math.max(k.length, maxKeyLen);
+            minKeyLen = Math.min(k.length, minKeyLen)
             const jv = new JsonValue(this.value[k], head, this.indent);
             jsonValueMap[k] = jv;
             keys.push(k);
@@ -80,23 +81,22 @@ export class JsonValue {
         }
         oneLine = oneLine && total < conf.lineLen;
 
-
         const fields: string[] = [];
-        if (oneLine || max - min > conf.align) {
+        if (oneLine || maxKeyLen - minKeyLen > conf.align) {
             for (let k of keys) {
                 fields.push(`"${k}": ${kvStrMap[k]}`)
             }
         } else {
-            max += 3; // "abc": -> "":
-            let isFirst = true;
-            for (let k of keys) {
-                if (isFirst && (!conf.tailComma)) {
-                    isFirst = false;
-                    const first = Math.floor(max + conf.indentCount / 2);
+            maxKeyLen += 3; // "abc": -> "":
+            const headComma = !conf.tailComma;
+            for (let i = 0; i < keys.length; i++) {
+                const k = keys[i];
+                if (headComma && i === 0) {
+                    const first = Math.floor(maxKeyLen + conf.indentCount / 2);
                     const key = `"${k}":`.padEnd(first, " ");
                     fields.push(key + kvStrMap[k]);
                 } else {
-                    const key = `"${k}":`.padEnd(max, " ");
+                    const key = `"${k}":`.padEnd(maxKeyLen, " ");
                     fields.push(key + kvStrMap[k]);
                 }
             }
@@ -104,34 +104,27 @@ export class JsonValue {
         return [fields, oneLine];
     }
 
-    private objStrHead(): string {
+    private object2string(): string {
         const [valueList, oneLine] = this.objectFields()
-        const head = this.head + this.indent;
+        const crHead = "\n" + this.head + this.indent;
         let str = "{";
-        for (var i = 0, l = valueList.length; i < l; i++) {
-            str += oneLine ? " " : "\n" + head;
-            str += (i === 0 ? "" : ",") + valueList[i];
-        }
-
-        str += oneLine ? "}" : "\n" + this.head + "}";
-        return str;
-    }
-
-    private objStrTail(): string {
-        const [valueList, oneLine] = this.objectFields()
-        const head = this.head + this.indent;
-        let str = "{";
-        const max = valueList.length - 1;
-        for (var i = 0; i < valueList.length; i++) {
-            str += oneLine ? " " : "\n" + head;
-            str += valueList[i] + (i === max ? "" : ",");
+        if (conf.tailComma) {
+            const max = valueList.length - 1;
+            for (var i = 0; i < valueList.length; i++) {
+                str += oneLine ? " " : crHead;
+                str += valueList[i] + (i === max ? "" : ",");
+            }
+        } else {
+            for (var i = 0, l = valueList.length; i < l; i++) {
+                str += oneLine ? " " : crHead;
+                str += (i === 0 ? "" : ",") + valueList[i];
+            }
         }
         str += oneLine ? "}" : "\n" + this.head + "}";
         return str;
     }
 
-    private arrStrHead(): string {
-        let str = "[";
+    private array2string(): string {
         let oneLine = true;
         let valueList: string[] = [];
         const head = this.head + this.indent;
@@ -143,43 +136,41 @@ export class JsonValue {
             oneLine = oneLine && nowarp;
             valueList.push(jv.toString());
         }
-
-        for (var i = 0, l = valueList.length; i < l; i++) {
-            if (!oneLine) {
-                str += "\n" + head;
-            }
-            str += (i === 0 ? "" : ", ") + valueList[i];
-        }
+        let str = "[" + this.concatArrayValue(valueList, head, oneLine);
         str += oneLine ? "]" : "\n" + this.head + "]";
         return str;
     }
 
-    private arrStrTail(): string {
-        let str = "[";
-        let oneLine = true;
-        let valueList: string[] = [];
-        const head = this.head + this.indent;
-        for (let a of this.value) {
-            const jv = new JsonValue(a, head, this.indent);
-            oneLine = oneLine && jv.type === "simple";
-            valueList.push(jv.toString());
-        }
-        const max = valueList.length - 1;
-        for (var i = 0, l = valueList.length; i < l; i++) {
-            if (!oneLine) {
-                str += "\n" + head;
+    /**
+     * 连接数组元素的字段
+     * @param arr  字段列表
+     * @param head 头部空白
+     * @param oneLine 是否单行
+     */
+    public concatArrayValue(arr: string[], head: string, oneLine: boolean): string {
+        let str = "";
+        const crHead = "\n" + head;
+        if (conf.tailComma) {
+            const max = arr.length - 1;
+            for (var i = 0, l = arr.length; i < l; i++) {
+                if (!oneLine) str += crHead
+                str += arr[i] + (i === max ? "" : ",");
             }
-            str += valueList[i] + (i === max ? "" : ",");
+        } else {
+            for (var i = 0, l = arr.length; i < l; i++) {
+                (oneLine) || (str += crHead)
+                str += (i === 0 ? "" : ", ") + arr[i];
+            }
         }
-        str += oneLine ? "]" : "\n" + this.head + "]";
         return str;
     }
+
 
     public toString(): string {
         switch (this.type) {
             case "simple": return this.value;
-            case "object": return conf.tailComma ? this.objStrTail() : this.objStrHead();
-            case "array": return conf.tailComma ? this.arrStrTail() : this.arrStrHead();
+            case "object": return this.object2string();
+            case "array": return this.array2string();
             default: throw new Error("unknow type:" + this.type);
         }
     }
